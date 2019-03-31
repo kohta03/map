@@ -1,0 +1,86 @@
+<body id="home_body">
+    <div id="home" class="contents">
+        <div id="navibar">
+            <h5 v-on:click="isUserActive = !isUserActive">{{user}}</h5>
+            <input type="hidden" id="form_board_id" value="<%= current_user.email %>">
+            <div>
+                <% if user_signed_in? %>
+                    <p><%= link_to "ログアウト", destroy_user_session_path, method: :delete %></p>
+                <% end %>
+                <div>
+                    <h5>Move to place</h5>
+                    <%= render :partial => "articles/userSetCenter" %>
+                </div>
+                <div>
+                    <h5>Register the location</h5>
+                    <%= render :partial => "articles/userForm" %>
+                </div>
+                
+            </div>
+            <hr>
+            <h5 v-on:click="isGeneralActive = !isGeneralActive">General</h5>
+            <div v-if="isGeneralActive">
+                <%= link_to 'General Mapへ', '/' %>
+            </div>
+        </div>
+    </div>
+    <div id="map-area" class="contents">
+        <div id="map"></div>
+    </div>
+    <script type="text/javascript">
+        handler = Gmaps.build('Google');
+        handler.buildMap({ provider: { scrollwheel: false }, internal: {id: 'map'}}, function(){
+            markers = handler.addMarkers([
+                <% for userArticle in @userArticles %>
+                    <% if userArticle.user_id == current_user.id %>
+                        {
+                            "lat": <%= userArticle.latitude %>,
+                            "lng": <%= userArticle.longitude %>,
+                            "infowindow": '<p><%= userArticle.title %></p><p><%= link_to '削除', user_path(userArticle.id), method: :delete %></p>'
+                        },
+                    <% end %>
+                <% end %>
+            ]);
+            handler.bounds.extendWith(markers);
+            handler.fitMapToBounds();
+            handler.getMap().setZoom(17);
+            if(<%= UserArticle.exists? %>){
+                var lat, lng, cnt = 0;
+                <% for userArticle in @userArticles %>
+                    <% if userArticle.user_id == current_user.id %>
+                        lat = <%= userArticle.latitude %>;
+                        lng = <%= userArticle.longitude %>;
+                        cnt++;
+                    <% else %>
+                        if(cnt == 0){
+                            lat = 35.681236;
+                            lng = 139.767125;
+                        }
+                    <% end %>
+                <% end %>
+                handler.getMap().setCenter(new google.maps.LatLng(lat, lng));
+            }else{
+                handler.getMap().setCenter(new google.maps.LatLng(35.681236, 139.767125));
+            }
+        });
+
+        var _userSetCenter = (address) => {  
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({'address': address}, function(results, status){
+                if(status == google.maps.GeocoderStatus.OK) {
+                    var lat = results[0].geometry.location.lat();
+                    var lng = results[0].geometry.location.lng();
+                }
+                handler.getMap().setCenter(new google.maps.LatLng(lat, lng)); 
+            });
+        }
+
+        var _userSerchGeo = () => {
+            var address = document.getElementById("moveAddress").value;
+            document.getElementById("moveAddress").value = "";
+            _userSetCenter(address);
+        }
+    </script>
+    
+    <%= javascript_pack_tag 'test' %>
+</body>

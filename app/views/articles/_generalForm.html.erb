@@ -1,0 +1,16 @@
+<%= form_for @article, url: articles_path do |f| %>
+ 
+  <div class="field input-field">
+    <%= f.label :title, :class => 'active' %>
+    <%= f.text_field :title %>
+  </div>　
+ 
+  <div class="field input-field">
+    <%= f.label :address, :class => 'active' %>
+    <%= f.text_field :address %>
+  </div>
+ 
+  <div class="actions">
+    <%= f.submit "Registration", :class => 'btn-large waves-effect waves-light' %>
+  </div>
+<% end %>
